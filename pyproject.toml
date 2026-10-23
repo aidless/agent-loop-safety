@@ -13,3 +13,4 @@ openai = ["openai"]
 
 [tool.setuptools]
 py-modules = ["agent_loop", "adapters"]
+packages = ["evalkit"]
