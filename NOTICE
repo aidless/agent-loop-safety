@@ -1,0 +1,12 @@
+agent-loop-safety
+Copyright 2026 aidless
+
+This project is an independent reimplementation/adaptation derived from
+Anthropic's single-agent-loop-kit:
+  https://github.com/anthropics/single-agent-loop-kit  (Apache-2.0)
+
+The safety-primitive design (single agent loop, write gate, token budget,
+optional verifier, progressive disclosure of skills/tools) and the
+eval-tooling concepts (compare, chain_coverage, coupling_map, estimate)
+originate there. This repository is not affiliated with, nor endorsed by,
+Anthropic.

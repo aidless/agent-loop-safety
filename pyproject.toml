@@ -1,0 +1,15 @@
+[project]
+name = "agent-loop-safety"
+version = "0.1.0"
+description = "Single-agent-loop harness skeleton with safety primitives (write gate, budget, verifier) and an eval toolkit, distilled from Anthropic's reference_loop / single-agent-loop-kit."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+anthropic = ["anthropic"]
+openai = ["openai"]
+
+[tool.setuptools]
+py-modules = ["agent_loop", "adapters"]
