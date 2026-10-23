@@ -1,5 +1,9 @@
 # agent-loop-safety
 
+[English](README_EN.md) | 中文
+
+![tests](https://github.com/aidless/agent-loop-safety/actions/workflows/tests.yml/badge.svg)
+
 单 agent 循环 harness 的**安全原语骨架** + 一套**评测对比工具**，提炼自 Anthropic 的
 [《Building agents: When to fold subagents into your main agent loop》](https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop)
 与其配套仓库 [single-agent-loop-kit](https://github.com/anthropics/single-agent-loop-kit)。
@@ -25,6 +29,8 @@ agent-loop-safety/
 │   ├── chain_coverage.py  # 每条生产链路都要有 eval 任务覆盖（防漏测）
 │   ├── coupling_map.py    # 从 trace 看谁扛流量、谁总一起跑（决定能不能合并）
 │   └── estimate.py        # 按已测 variant 估算下一次 run 的 token
+├── examples/
+│   └── real_model_demo.py # 接真实模型的端到端示例（Anthropic / OpenAI 二选一）
 ├── tests/                 # 离线单测（无需任何 API key）
 ├── pyproject.toml
 ├── LICENSE                # Apache-2.0（与原作一致）
@@ -57,6 +63,20 @@ python agent_loop.py
 ```bash
 python -m unittest discover -s tests -t .
 ```
+
+### 接真实模型（端到端示例）
+
+`examples/real_model_demo.py` 已把骨架接到真实后端，按环境变量选 Anthropic / OpenAI：
+
+```bash
+export ANTHROPIC_API_KEY=sk-...        # 用 Anthropic 后端
+# 或 export OPENAI_API_KEY=sk-...      # 用 OpenAI 后端
+pip install -e ".[anthropic]"          # 或 ".[openai]"
+export ALLOW_WRITES=1                  # 可选：放行写工具（否则默认拒绝，演示"人在环"）
+python examples/real_model_demo.py
+```
+
+无 key 时脚本会打印接入说明并以退出码 2 结束（不会报错）。写闸门 / 预算 / verifier 仍由 `Agent` 掌控，适配器只做消息格式翻译。
 
 ## 接入你自己的模型客户端
 
