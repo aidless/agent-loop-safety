@@ -25,7 +25,8 @@ agent-loop-safety/
 │   ├── coupling_map.py    # from traces, who carries load / who always runs together (decides what to merge)
 │   └── estimate.py        # estimate the next run's tokens from a measured variant
 ├── examples/
-│   └── real_model_demo.py # end-to-end demo wired to a real Anthropic / OpenAI backend
+│   ├── real_model_demo.py          # end-to-end demo wired to a real Anthropic / OpenAI backend
+│   └── agent_redteam_integration.py # advanced: wrap a red-team harness as gated Tools + full evalkit walkthrough
 ├── tests/                 # offline unit tests (no API key required)
 ├── pyproject.toml
 ├── LICENSE                # Apache-2.0 (same as the original)
@@ -70,7 +71,22 @@ python examples/real_model_demo.py
 ```
 
 With no key set, the script prints setup instructions and exits with code 2 instead of erroring. Safety primitives (write gate /
-budget / verifier) stay under `Agent` control regardless of backend — the adapter only translates message formats.
+budget / verifier) stay under `Agent` control regardless of backend — the adapter only translates message formats. Add
+`--flow-dir <dir>` to write the run into the `evalkit` layout for direct `compare`.
+
+## Advanced example: red-team harness + eval-first discipline
+
+`examples/agent_redteam_integration.py` shows how to wrap an external red-team platform as Tools — if the real `agent_redteam`
+package is installed it is lazy-imported as the live attack backend; otherwise a built-in mock is used. The `run_attack` tool has
+external side effects and **must pass the write gate**. The example then runs two variants (baseline = attacks allowed, locked =
+attacks blocked) through `evalkit`, making the gate's effect directly measurable:
+
+```bash
+python examples/agent_redteam_integration.py --flow-dir flow_redteam
+```
+
+Runs fully offline (FakeModelClient + mock harness); prints `compare` flips and `chain_coverage` verdicts, and writes the
+standard flow layout so you can re-run `compare` on it.
 
 ## Plug in your own model client
 

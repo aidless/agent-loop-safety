@@ -30,7 +30,8 @@ agent-loop-safety/
 │   ├── coupling_map.py    # 从 trace 看谁扛流量、谁总一起跑（决定能不能合并）
 │   └── estimate.py        # 按已测 variant 估算下一次 run 的 token
 ├── examples/
-│   └── real_model_demo.py # 接真实模型的端到端示例（Anthropic / OpenAI 二选一）
+│   ├── real_model_demo.py          # 接真实模型的端到端示例（Anthropic / OpenAI 二选一）
+│   └── agent_redteam_integration.py # 进阶：把 red-team harness 包成受闸门保护的 Tool + evalkit 全流程
 ├── tests/                 # 离线单测（无需任何 API key）
 ├── pyproject.toml
 ├── LICENSE                # Apache-2.0（与原作一致）
@@ -77,6 +78,16 @@ python examples/real_model_demo.py
 ```
 
 无 key 时脚本会打印接入说明并以退出码 2 结束（不会报错）。写闸门 / 预算 / verifier 仍由 `Agent` 掌控，适配器只做消息格式翻译。
+
+### 进阶示例：接 red-team harness 并跑评测纪律
+
+`examples/agent_redteam_integration.py` 演示如何把外部 red-team 平台（真实 `agent_redteam` 包若已安装则自动 lazy-import 作后端；否则用内置 Mock）的攻击能力包成 Tool——其中 `run_attack` 是写/外部副作用工具，**必须过写闸门**；并用 `evalkit` 跑 baseline（放行攻击）vs locked（拦截攻击）两个 variant，直接看到闸门如何改变评测结果：
+
+```bash
+python examples/agent_redteam_integration.py --flow-dir flow_redteam
+```
+
+完全离线可跑（FakeModelClient + Mock harness），输出 `compare` 的 flips / `chain_coverage` 结论，结果落盘到 `flow_redteam/`，可直接二次 `compare`。
 
 ## 接入你自己的模型客户端
 
