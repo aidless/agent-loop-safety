@@ -158,6 +158,25 @@ route, writes, chain` (aligned with Anthropic kit's `/claude/hillclimb/<name>/<v
 | **verifier** | An answer is challenged once with a chance to fix; if it fails twice it is withheld and not returned |
 | **progressive disclosure** | The system prompt holds only a one-line skill description (`load_skill` loads on demand); `deferred` tools go through `tool_search` |
 
+## Reproduction
+
+Every number in this README comes from a command in this repo; re-run to verify:
+
+```bash
+# 1) Offline self-check: stop=answered / turns=4 / tokens=290/69 / final text='已完成。'
+python agent_loop.py
+
+# 2) Full unit suite (no API key, no network): 6 tests
+python -m unittest discover -s tests -t .
+python -m pytest tests/ -q          # same 6 tests under pytest
+
+# 3) Eval-kit offline example: gate on/off flips 3 task results (1.00 -> 0.00 pass rate)
+python examples/agent_redteam_integration.py --flow-dir flow_redteam
+```
+
+> The `flow_redteam/` output above is regenerable and is **not** committed; remove it after inspecting.
+> `tokens=290/69` and `turns=4` are the actual outputs of `python agent_loop.py` in this repo as of this commit.
+
 ## Important statements
 
 - This repo is **independently implemented** and has no affiliation with or endorsement from Anthropic (see `NOTICE`).
