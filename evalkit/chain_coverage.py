@@ -43,6 +43,7 @@ def check(flow_dir, baseline, traces):
     missing = []
     for ch in prod:
         tch = tuple(ch)
+        # 集合包含：顺序和重复不计。见 FAILURE_MODES.md。
         covered = any(set(tch) <= set(ec) for ec in eval_chains)
         if not covered:
             missing.append(list(ch))

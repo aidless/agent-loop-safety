@@ -1,9 +1,11 @@
 """
 real_model_demo.py — 接真实模型的端到端示例（Anthropic / OpenAI 二选一）。
 
-零改动即可跑骨架；只需提供对应的 API key 环境变量，并 pip install 对应 SDK。
-说明：安全原语（写闸门 / 预算 / verifier）仍由 Agent 负责，与后端无关——
-适配器只做消息格式的双向翻译。
+这是可选的真实模型演示，不是基准，也不参加离线测试的评分。
+需要先 `pip install -e .`（或把仓库根目录放进 PYTHONPATH）。本文件不往 sys.path 里塞绝对路径。
+无 key 时打印说明并以退出码 2 结束，不写 results，不调用模型。
+说明：写闸门 / 预算 / verifier 仍由 Agent 负责。适配器只翻译消息，并且预算只看见适配器抄回来的 usage。
+见 FAILURE_MODES.md。
 
 用法:
     export ANTHROPIC_API_KEY=sk-...        # 用 Anthropic 后端
@@ -24,9 +26,6 @@ import os
 import sys
 import time
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
 
 from agent_loop import Agent, Tool, allow_all_writes
 

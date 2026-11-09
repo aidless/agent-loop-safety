@@ -36,6 +36,16 @@ def _block_to_dict(b: Any) -> dict:
     return out
 
 
+def reported_usage(usage: Any, fields: dict[str, str]) -> dict:
+    """把 SDK usage 上的属性抄进 Agent 预算使用的 dict。
+
+    用 getattr，不读 mapping 的键。usage 为 None、或缺属性、或传入 dict 时，
+    对应项是 0（dict 没有这些属性）。Agent 的 token 预算信任这份数字：
+    这里少报，预算就不会触发。本函数不访问网络。见 FAILURE_MODES.md。
+    """
+    return {dest: getattr(usage, src, 0) for dest, src in fields.items()}
+
+
 def _normalize_messages(messages: list) -> list[dict]:
     """把 Agent 内部累积的 messages（可能含 _Block 对象或 SDK 块）转成 plain dict。"""
     out: list[dict] = []
@@ -72,7 +82,6 @@ class AnthropicModelClient:
             tools=tools,
             messages=_normalize_messages(messages),
         )
-        usage = resp.usage
         content = [
             _Block(b.type,
                    text=getattr(b, "text", None),
@@ -81,12 +90,12 @@ class AnthropicModelClient:
                    input=dict(getattr(b, "input", {}) or {}))
             for b in resp.content
         ]
-        return ModelResponse(content, resp.stop_reason, {
-            "input_tokens": getattr(usage, "input_tokens", 0),
-            "output_tokens": getattr(usage, "output_tokens", 0),
-            "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
-            "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
-        })
+        return ModelResponse(content, resp.stop_reason, reported_usage(resp.usage, {
+            "input_tokens": "input_tokens",
+            "output_tokens": "output_tokens",
+            "cache_read_input_tokens": "cache_read_input_tokens",
+            "cache_creation_input_tokens": "cache_creation_input_tokens",
+        }))
 
 
 class OpenAIModelClient:
@@ -183,9 +192,8 @@ class OpenAIModelClient:
             except json.JSONDecodeError:
                 args = {}
             content.append(_Block("tool_use", id=tc.id, name=tc.function.name, input=args))
-        usage = resp.usage
         stop = "tool_use" if msg.tool_calls else "end_turn"
-        return ModelResponse(content, stop, {
-            "input_tokens": getattr(usage, "prompt_tokens", 0),
-            "output_tokens": getattr(usage, "completion_tokens", 0),
-        })
+        return ModelResponse(content, stop, reported_usage(resp.usage, {
+            "input_tokens": "prompt_tokens",
+            "output_tokens": "completion_tokens",
+        }))

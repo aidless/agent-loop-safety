@@ -6,3 +6,6 @@ __pycache__/
 .idea/
 .vscode/
 *.env
+# Demo output. Not an eval corpus; do not commit it as a result.
+flow/
+flow_redteam/

@@ -1,9 +1,4 @@
-import os
-import sys
 import unittest
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
 
 from evalkit.compare import compare, load_variant
 from evalkit.chain_coverage import check

@@ -10,7 +10,13 @@ dependencies = []
 [project.optional-dependencies]
 anthropic = ["anthropic"]
 openai = ["openai"]
+# pytest only. CI and the offline path do not install the model SDKs.
+dev = ["pytest>=8.3"]
 
 [tool.setuptools]
 py-modules = ["agent_loop", "adapters"]
 packages = ["evalkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

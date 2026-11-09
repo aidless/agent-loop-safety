@@ -1,14 +1,15 @@
 """
-agent_loop_skeleton.py
+agent_loop.py
 单 agent 循环 harness 骨架 —— 提炼自 Anthropic reference_loop/loop.py 的安全原语。
 只保留"与后端无关、可直接复用"的部分：
     * write gate       写外部状态的工具必须经过审批，缺失闸门绝不默认放行
-    * token 预算       含子 agent 花费，跨整次 run 累计
+    * token 预算       只累计客户端上报的 usage，以及工具主动 charge() 的部分
     * turn 预算 / 批次上限
-    * 可选 verifier    答案被拒两次则扣留，不返回给用户
+    * 可选 verifier    返回空则接受；连续两次非空才扣留。不比对草稿是否改过
     * 渐进披露         skill 系统提示只放一行描述；deferred 工具走 tool_search
-不是框架、不依赖 anthropic SDK：把你自己的客户端实现 ModelClient 协议即可接入。
-零依赖（仅标准库）。`python agent_loop_skeleton.py` 用内置 FakeModelClient 离线自检。
+不是框架、不依赖模型 SDK：把你自己的客户端实现 ModelClient 协议即可接入。
+零依赖（仅标准库）。`python agent_loop.py` 用内置 FakeModelClient 离线自检。
+已知漏洞见 FAILURE_MODES.md，不在这里声称已修复。
 """
 from __future__ import annotations
 
@@ -253,6 +254,7 @@ class Agent:
             text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text").strip()
 
             if resp.stop_reason == "pause_turn":   # 服务端工具（如 tool_search）要再来一轮
+                # pause_turn 不查 token 预算。见 FAILURE_MODES.md。
                 continue
             if resp.stop_reason in ("refusal", "max_tokens", "model_context_window_exceeded"):
                 cuts = [b for b in resp.content if getattr(b, "type", None) == "tool_use"]
@@ -266,6 +268,7 @@ class Agent:
             if resp.stop_reason != "tool_use":
                 complaint = self.verify(text, messages) if self.verify else None
                 if not complaint:
+                    # 此处不查 token 预算；verify 返回空即 answered，即使正文与上一稿相同。见 FAILURE_MODES.md。
                     return Result(text, "answered", turn, tin, tout, messages)
                 complaints += 1
                 if complaints > 1:   # 只给一次修正机会，避免无限循环
