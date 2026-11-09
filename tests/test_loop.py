@@ -1,10 +1,5 @@
 import json
-import os
-import sys
 import unittest
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
 
 from agent_loop import Agent, Tool, ModelResponse, _Block
 
@@ -58,6 +53,45 @@ class TestLoop(unittest.TestCase):
         self.assertEqual(res.stop, "answered")
         self.assertEqual(res.turns, 4)
         self.assertEqual(res.text, "已完成。")
+        complaints = [
+            m.get("content") for m in res.messages
+            if isinstance(m.get("content"), str) and "请确认这是给用户的最终答复。" in m["content"]
+        ]
+        self.assertEqual(len(complaints), 1)
+
+    def test_two_reads_in_one_response_both_run(self):
+        """Both read calls in one response run. This does not show they overlapped in time."""
+        seen = []
+
+        def make(name):
+            def run(args):
+                seen.append(name)
+                return name
+            return run
+
+        tools = [
+            Tool("alpha", "A", {"type": "object", "properties": {}}, make("alpha")),
+            Tool("beta", "B", {"type": "object", "properties": {}}, make("beta")),
+        ]
+
+        class TwoReadsThenAnswer:
+            def __init__(self):
+                self.n = 0
+
+            def create(self, *, model, max_tokens, system, tools, messages):
+                self.n += 1
+                if self.n == 1:
+                    return ModelResponse([
+                        _Block("tool_use", id="1", name="alpha", input={}),
+                        _Block("tool_use", id="2", name="beta", input={}),
+                    ], "tool_use", {"input_tokens": 1, "output_tokens": 1})
+                return ModelResponse([_Block("text", text="ok")],
+                                     "end_turn", {"input_tokens": 1, "output_tokens": 1})
+
+        agent = Agent(system="s", tools=tools, client=TwoReadsThenAnswer())
+        res = agent.run("go")
+        self.assertEqual(res.stop, "answered")
+        self.assertCountEqual(seen, ["alpha", "beta"])
 
 
 if __name__ == "__main__":

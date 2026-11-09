@@ -80,6 +80,7 @@ def compare(flow_dir, before, after, exclude=()):
     tasks = per_task(b, a)
     flips = [t for t in tasks if t["flipped"]]
     routes = [t for t in tasks if t["route_changed"] and t["task_id"] not in exclude]
+    # 通过率不降且路由没变即 holds；互相抵消的翻转仍可 holds。见 FAILURE_MODES.md。
     holds = (sa["pass_rate"] >= sb["pass_rate"]) and not routes
 
     lines = [f"compare {before} -> {after}  (holds={holds})",

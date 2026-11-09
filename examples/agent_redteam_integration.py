@@ -8,8 +8,11 @@ agent_redteam_integration.py — 进阶示例：把外部 red-team harness 包�
   - 用两个 variant 对比：baseline=放行攻击 vs locked=拦截攻击，
     直接看到「闸门开关」如何改变评测结果（compare 会报 flips）。
 
-可离线运行：用 FakeModelClient + 内置 MockRedTeamHarness。若本机装了真实的
-`agent_redteam` 包，会被 lazy-import 作为真实攻击后端（attacks.loader.load_attack_vectors）。
+可离线运行：用 FakeModelClient + 内置 MockRedTeamHarness。需要先 `pip install -e .`
+（或把仓库根目录放进 PYTHONPATH）。本文件不往 sys.path 里塞绝对路径。
+若本机装了真实的 `agent_redteam` 包，会被 lazy-import 作为攻击后端
+（attacks.loader.load_attack_vectors），那时输出就不再是内置 mock。
+`passed` 表示攻击函数真的执行了，不是「折叠子 agent 有帮助」。见 FAILURE_MODES.md。
 
     python examples/agent_redteam_integration.py
     python examples/agent_redteam_integration.py --flow-dir flow_redteam   # 落盘到 evalkit 布局
@@ -21,9 +24,6 @@ import json
 import sys
 import time
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
 
 from agent_loop import Agent, Tool, FakeModelClient
 from evalkit.runner import BaseEvalRunner, EvalResult
@@ -158,7 +158,7 @@ def main():
     runner.run_variant("baseline", reps=1)        # 放行攻击
     RedTeamRunner(flow, tasks, allow_attacks=False).run_variant("locked", reps=1)  # 拦截攻击
 
-    # production traces：每条生产链路都要有 eval 任务覆盖
+    # 不是生产导出。假模型每次都走 recon -> run_attack，这里把这条 route 抄三份。
     (flow / "traces.jsonl").write_text(
         "\n".join(json.dumps({"chain": ["recon", "run_attack"]}, ensure_ascii=False) for _ in tasks) + "\n",
         encoding="utf-8")
@@ -178,6 +178,8 @@ def main():
     print("-" * 60)
     print(f"结论：闸门开关改变了 {len(cmp['flips'])} 个任务的 passed 结果"
           f"（{(cmp['summary_before']['pass_rate']):.2f} -> {cmp['summary_after']['pass_rate']:.2f}）。")
+    print("这组数字只说明写闸门是否让攻击函数执行，不是折叠子 agent 的测量。")
+    print("traces.jsonl 是脚本写的同一条 route 的三份拷贝，不是生产导出。coverage OK 只说明检查器认出了这行。")
     print(f"结果已写入 {flow}/  （baseline/ 与 locked/ 各含 results.jsonl，可直接二次 compare）")
 
 
