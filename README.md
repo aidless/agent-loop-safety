@@ -65,6 +65,51 @@ python agent_loop.py
 python -m unittest discover -s tests -t .
 ```
 
+## 循环与安全原语流程图
+
+```mermaid
+flowchart TB
+    U[用户消息] --> A[Agent.run<br/>单 agent 循环]
+    A --> B{预算检查<br/>turns / tokens}
+    B -- 超限 --> S1[停止: budget_exhausted]
+    B -- 未超限 --> M[ModelClient 调用]
+    M --> T{工具调用?}
+    T -- 只读工具 --> E[执行并回填 observation]
+    T -- 写/外部副作用工具 --> G{写闸门 approve}
+    G -- 拒绝 --> D[写操作被拒, 回填拒绝原因<br/>人在环演示路径]
+    G -- 放行 --> E
+    E --> B
+    T -- 最终作答 --> V{verifier 校验}
+    V -- 拦截 --> M
+    V -- 通过 --> S2[停止: answered]
+```
+
+（闸门/verifier/预算都在 `agent_loop.py` 的 `Agent` 内，任何 `ModelClient` 适配器只做消息翻译，不绕过安全原语。）
+
+## 实测数据 / 评测结果表
+
+以下数字全部来自 2026-11-10 本机实跑（Linux · Python 3.12，零依赖、无 API key），命令与输出可复现：
+
+| 检查 | 命令 | 实测结果 |
+|---|---|---|
+| 离线循环自检 | `python3 agent_loop.py` | `stop=answered / turns=4 / tokens=290/69 / final text='已完成。'`（read 工具跑通 → write 被闸门拒绝 → verifier 拦一次 → 修正定稿） |
+| 离线单测 | `python3 -m unittest discover -s tests -t .` | `Ran 6 tests in 0.007s`，**OK**（0 失败） |
+| evalkit 对比（Mock 后端） | `python3 examples/agent_redteam_integration.py --flow-dir <dir>` | baseline vs locked：pass_rate **1.0000 → 0.0000**（3 任务全部翻转 t01/t02/t03）；latency 0.533→0.333 ms；model_calls 9→9；tokens 690/171 不变 |
+| chain_coverage | 同上 | `OK (3 prod chains, 1 eval chains)` |
+| 真实模型端到端 | `python3 examples/real_model_demo.py` | 无 key 时打印接入说明、退出码 2（诚实降级，见 Limits） |
+
+> 评测数字的语义：`agent_redteam_integration.py` 是 Mock harness 演示——
+> 它证明的是「**闸门开关确实改变评测结果、evalkit 能把变化归因到具体任务**」
+> 这条度量链路可用，**不是**任何安全或性能结论。
+
+## What this doesn't claim / Limits
+
+- **参考骨架 / 教学实现，不是生产级 runtime**（Anthropic 原仓库亦自述 "Reference implementation. Not maintained."）。
+- 「折叠子智能体能提速/提质」这一主张**实证极薄**：原文 1 个客户、工具包 1 个玩具示例、单人单模型两次，merge/upkeep 路径从未在真实模型上跑过。本仓库帮你度量你自己的系统，不替你下结论。
+- 本 README 的全部评测数字来自 Mock/Fake 后端，不含任何真实模型调用；真实模型路径需要 key 且未在本机验证。
+- 写闸门的 `approve` 由调用方注入；骨架不提供身份认证、审计持久化或并发安全。
+
+
 ### 接真实模型（端到端示例）
 
 `examples/real_model_demo.py` 已把骨架接到真实后端，按环境变量选 Anthropic / OpenAI：
