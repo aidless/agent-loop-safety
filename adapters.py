@@ -18,7 +18,7 @@ import json
 import os
 from typing import Any
 
-from agent_loop import ModelClient, ModelResponse, _Block
+from agent_loop import ModelResponse, _Block
 
 
 def _block_to_dict(b: Any) -> dict:
