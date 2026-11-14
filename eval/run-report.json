@@ -1,0 +1,129 @@
+{
+ "total": 20,
+ "passed": 20,
+ "failed": 0,
+ "selftest": false,
+ "failed_by_axis": {},
+ "results": [
+  {
+   "id": "AL-01",
+   "axis": "loop/budget",
+   "ok": true,
+   "detail": "400000"
+  },
+  {
+   "id": "AL-02",
+   "axis": "loop/budget",
+   "ok": true,
+   "detail": "1050"
+  },
+  {
+   "id": "AL-03",
+   "axis": "loop/budget",
+   "ok": true,
+   "detail": "token_budget"
+  },
+  {
+   "id": "AL-04",
+   "axis": "loop/gate",
+   "ok": true,
+   "detail": "raised ValueError"
+  },
+  {
+   "id": "AL-05",
+   "axis": "loop/gate",
+   "ok": true,
+   "detail": "raised ValueError"
+  },
+  {
+   "id": "AL-06",
+   "axis": "loop/gate",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "id": "AL-07",
+   "axis": "loop/verifier",
+   "ok": true,
+   "detail": "4"
+  },
+  {
+   "id": "AL-08",
+   "axis": "loop/verifier",
+   "ok": true,
+   "detail": "290/69"
+  },
+  {
+   "id": "AL-09",
+   "axis": "loop/verifier",
+   "ok": true,
+   "detail": "verify_failed"
+  },
+  {
+   "id": "AL-10",
+   "axis": "evalkit/compare",
+   "ok": true,
+   "detail": "1.0"
+  },
+  {
+   "id": "AL-11",
+   "axis": "evalkit/compare",
+   "ok": true,
+   "detail": "3"
+  },
+  {
+   "id": "AL-12",
+   "axis": "evalkit/compare",
+   "ok": true,
+   "detail": "False"
+  },
+  {
+   "id": "AL-13",
+   "axis": "evalkit/coverage",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "AL-14",
+   "axis": "evalkit/coverage",
+   "ok": true,
+   "detail": "billing"
+  },
+  {
+   "id": "AL-15",
+   "axis": "evalkit/coupling",
+   "ok": true,
+   "detail": "3"
+  },
+  {
+   "id": "AL-16",
+   "axis": "evalkit/coupling",
+   "ok": true,
+   "detail": "3"
+  },
+  {
+   "id": "AL-17",
+   "axis": "evalkit/estimate",
+   "ok": true,
+   "detail": "1722"
+  },
+  {
+   "id": "AL-18",
+   "axis": "adapters/openai",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "id": "AL-19",
+   "axis": "docs/claims",
+   "ok": true,
+   "detail": "缺失闸门绝不默认放行"
+  },
+  {
+   "id": "AL-20",
+   "axis": "docs/claims",
+   "ok": true,
+   "detail": "latency_ms          0.6333      0.5000"
+  }
+ ]
+}

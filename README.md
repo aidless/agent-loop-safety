@@ -212,6 +212,30 @@ route, writes, chain`（与 Anthropic kit 的 `/claude/hillclimb/<name>/<variant
 - 证据强度有限：不要把它当成普遍定律，而要把它当成**你该去度量的假设**。
   `evalkit` 这套工具就是为这个度量而生的。
 
+## 验收题库与复算
+
+`eval/cases.jsonl` 是 20 条可执行验收题，覆盖八个模块的关键口径（`loop/budget` 预算与 token 计量、
+`loop/gate` 写闸门构造期/运行时、`loop/verifier` 轮次与答案扣留、`evalkit/compare` 通过率与翻转、
+`evalkit/coverage` 链路覆盖、`evalkit/coupling` 共现计数、`evalkit/estimate` token 估算、
+`adapters/openai` 工具翻译，另加 `docs/claims` 核对文档声明）。其中 **18 条是 `expr`/`raises`**，
+期望值不是抄文档，而是**调用本仓库 API 或解析 `flow_redteam/` 落盘结果现算**：
+
+```bash
+python3 eval/run_cases.py            # 20/20 cases passed
+python3 eval/run_cases.py --save     # 顺带把结果写进 eval/run-report.json
+python3 eval/run_cases.py --selftest # 篡改一条期望值，必须变红（19/20，证明这套题会失败）
+```
+
+**数字如何复算**：`eval/run-report.json` 里每条 case 都带 `id` / `axis` / `ok` / `detail`，
+把 `detail` 与 `cases.jsonl` 的 `verify` 代码一起看，就能从源码复现该数字；
+`--save` 重跑一次即可重建整份报告，不需要手工抄数。`docs/claims` 两条 `doc` 题
+（`README.md` 的 fail-closed 判据、`PREREG.md` 的 0.6333 → 0.5000 ms）则把文档声明
+钉在 `evalkit/compare` 的现算结果上——文档改了而代码没改，或反过来，都会变红。
+
+**失败归因**：`run_cases.py` 不只报通过率，失败时按 `axis` 汇总（例如
+`loop/budget: 1 条 —— AL-01`），直接指出是哪个模块的哪个口径坏了；
+`--selftest` 就是靠这条路径指出「被篡改的是 AL-01」。
+
 ## 许可证
 
 Apache-2.0。见 [LICENSE](LICENSE)。
